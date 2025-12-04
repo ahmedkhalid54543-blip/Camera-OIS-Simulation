@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OIS 悬丝共振模拟器 (Instant Switch Version)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            overflow: hidden;
+        }
+
+        /* === 街道背景 === */
+        .camera-view {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #0f172a 0%, #1e293b 40%, #334155 40%, #0f172a 100%);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.05s linear, filter 0.1s ease;
+            transform-origin: center center;
+        }
+
+        .street-light {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(254,240,138,0.8) 0%, rgba(254,240,138,0) 70%);
+            border-radius: 50%;
+            top: 35%;
+        }
+
+        .car-light {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ef4444, transparent);
+            bottom: 20%;
+            width: 100%;
+            opacity: 0.7;
+        }
+        
+        .phone-frame {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 12px solid #1f2937;
+            border-radius: 2rem;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+        }
+
+        /* OIS 结构示意图样式 */
+        .ois-diagram {
+            width: 100%;
+            height: 180px;
+            background: #1e293b; 
+            border-radius: 0.75rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lens-assembly {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb);
+            border-radius: 50%;
+            border: 4px solid #93c5fd;
+            position: absolute;
+            z-index: 10;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        /* 悬丝 (Springs) - 无动画 */
+        .spring-line {
+            position: absolute;
+            height: 2px;
+            background-color: #94a3b8;
+            transform-origin: 0 50%;
+            pointer-events: none;
+            /* 移除了 transition，实现瞬间切换 */
+        }
+
+        /* 锚点 (Anchors) - 无动画 */
+        .anchor-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #64748b; /* slate-500 */
+            border-radius: 50%;
+            z-index: 20;
+            transform: translate(-50%, -50%);
+            /* 移除了 transition，实现瞬间切换 */
+        }
+
+        canvas {
+            background-color: #111;
+            border-radius: 0.5rem;
+            width: 100%;
+            height: 80px;
+        }
+        
+        .btn-active {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+            color: #1d4ed8 !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        
+        .btn-solution-active {
+            border-color: #8b5cf6 !important;
+            background-color: #f5f3ff !important;
+            color: #6d28d9 !important;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row items-center justify-center p-4 gap-6 bg-gray-100">
+
+    <!-- 左侧：控制面板 -->
+    <div class="w-full md:w-[420px] bg-white p-5 rounded-xl shadow-xl space-y-5 h-[90vh] overflow-y-auto flex flex-col">
+        <div class="flex-shrink-0 border-b border-gray-100 pb-3">
+            <h1 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span>🔬</span> 工程透视模式
+            </h1>
+            <p class="text-gray-500 text-xs mt-1">
+                Engineering View: Structure & Resonance
+            </p>
+        </div>
+
+        <!-- 1. OIS 内部结构透视图 -->
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex-shrink-0 relative">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-bold text-slate-700 uppercase">Internal Structure (内部结构)</span>
+                <span id="spring-status-text" class="text-[10px] px-2 py-0.5 rounded bg-green-100 text-green-700 font-mono">Ready</span>
+            </div>
+            
+            <div class="ois-diagram" id="ois-diagram">
+                <!-- 锚点 (Anchors) - 静态存在，通过JS控制位置 -->
+                <div id="anchor-0" class="anchor-dot"></div>
+                <div id="anchor-1" class="anchor-dot"></div>
+                <div id="anchor-2" class="anchor-dot"></div>
+                <div id="anchor-3" class="anchor-dot"></div>
+
+                <!-- 悬丝 (Springs) -->
+                <div id="line-0" class="spring-line"></div>
+                <div id="line-1" class="spring-line"></div>
+                <div id="line-2" class="spring-line"></div>
+                <div id="line-3" class="spring-line"></div>
+
+                <!-- 镜头组件 -->
+                <div id="lens" class="lens-assembly flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full border border-blue-200 opacity-50"></div>
+                </div>
+            </div>
+            <p id="structure-desc" class="text-[10px] text-slate-400 mt-2 text-center leading-relaxed transition-all">
+                当前：传统四线结构 (4-Wire Structure)<br>容易产生低频共振
+            </p>
+        </div>
+
+        <!-- 2. 控制区域 -->
+        <div class="space-y-4 flex-grow">
+            <!-- 硬件开关 (3个状态) -->
+            <div class="grid grid-cols-3 gap-2 bg-gray-50 p-1.5 rounded-lg border border-gray-100">
+                <button onclick="setHardware('normal')" id="btn-normal" class="py-2 text-xs rounded-md font-medium text-gray-500 transition-all hover:bg-white leading-tight">
+                    正常模组<br><span class="text-[10px] scale-90 block opacity-70">Normal (4-wire)</span>
+                </button>
+                <button onclick="setHardware('broken')" id="btn-broken" class="py-2 text-xs rounded-md font-medium text-gray-500 transition-all hover:bg-white hover:text-red-500 leading-tight">
+                    问题模组<br><span class="text-[10px] scale-90 block opacity-70">Fatigued (4-wire)</span>
+                </button>
+                <button onclick="setHardware('solution')" id="btn-solution" class="py-2 text-xs rounded-md font-bold text-gray-500 transition-all hover:bg-white hover:text-purple-600 leading-tight border border-transparent">
+                    ✨ 终极方案<br><span class="text-[10px] scale-90 block opacity-70">Triangular (3-wire)</span>
+                </button>
+            </div>
+
+            <!-- 路况按钮 -->
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="setRoad('smooth')" id="road-smooth" class="road-btn flex flex-col items-center justify-center p-2 rounded border border-gray-200 hover:bg-gray-50 transition-all">
+                    <span class="text-xl mb-1">🛣️</span>
+                    <div class="text-[10px] font-bold leading-tight text-center">平路<br><span class="font-normal scale-90 block text-gray-400">Smooth</span></div>
+                </button>
+                <button onclick="setRoad('gravel')" id="road-gravel" class="road-btn flex flex-col items-center justify-center p-2 rounded border border-gray-200 hover:bg-gray-50 transition-all">
+                    <span class="text-xl mb-1">🪨</span>
+                    <div class="text-[10px] font-bold leading-tight text-center">碎石路<br><span class="font-normal scale-90 block text-gray-400">Gravel</span></div>
+                </button>
+                <button onclick="setRoad('brick')" id="road-brick" class="road-btn flex flex-col items-center justify-center p-2 rounded border border-gray-200 hover:bg-gray-50 transition-all">
+                    <span class="text-xl mb-1">🧱</span>
+                    <div class="text-[10px] font-bold leading-tight text-center text-red-600">比利时路<br><span class="font-normal scale-90 block text-gray-400">Cobblestone</span></div>
+                </button>
+            </div>
+
+            <!-- 数据监控 -->
+            <div class="bg-black p-3 rounded-lg border border-gray-800">
+                <div class="flex justify-between items-end mb-1">
+                    <span class="text-[10px] text-gray-400">GYRO FREQUENCY</span>
+                    <span id="vib-level" class="text-xs font-mono text-green-400">0.0 Hz</span>
+                </div>
+                <canvas id="scope" height="50"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右侧：手机模拟展示 -->
+    <div class="relative w-[300px] h-[600px] phone-frame shadow-2xl flex-shrink-0 transform transition-transform duration-500" id="phone-container">
+        <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-28 h-6 bg-black z-20 rounded-b-xl"></div>
+        
+        <div class="relative w-full h-full bg-black overflow-hidden">
+            <!-- 模拟摄像头画面 -->
+            <div id="camera-view" class="camera-view">
+                <div class="street-light" style="left: 20%"></div>
+                <div class="street-light" style="left: 80%"></div>
+                <div class="car-light"></div>
+                <div class="absolute bottom-0 w-full h-1/3 bg-slate-800 opacity-50"></div>
+                
+                <!-- 对焦框 -->
+                <div id="focus-box" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 border-2 border-yellow-400 opacity-80 transition-all duration-75">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1 h-2 bg-yellow-400"></div>
+                    <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1 h-2 bg-yellow-400"></div>
+                    <div class="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-1 bg-yellow-400"></div>
+                    <div class="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-2 h-1 bg-yellow-400"></div>
+                </div>
+            </div>
+
+            <!-- UI -->
+            <div class="absolute bottom-6 left-0 w-full flex justify-center items-center gap-8 z-10">
+                 <div class="w-10 h-10 rounded bg-gray-800 opacity-50"></div>
+                 <div class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center">
+                    <div class="w-14 h-14 rounded-full bg-red-600 opacity-90"></div>
+                 </div>
+                 <div class="w-10 h-10 rounded bg-gray-800 opacity-50"></div>
+            </div>
+            
+            <!-- 警告弹窗 -->
+            <div id="warning-msg" class="hidden absolute top-16 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur px-4 py-2 rounded text-center border border-red-500/50 w-3/4">
+                <div class="text-red-500 font-bold text-xs animate-pulse">⚠ RESONANCE (共振)</div>
+                <div class="text-white text-[10px] mt-1">23.4Hz Critical Failure</div>
+            </div>
+            
+            <!-- 成功弹窗 -->
+             <div id="success-msg" class="hidden absolute top-16 left-1/2 transform -translate-x-1/2 bg-green-900/90 backdrop-blur px-4 py-2 rounded text-center border border-green-500/50 w-3/4">
+                <div class="text-green-400 font-bold text-xs">✅ STABLE (稳定)</div>
+                <div class="text-white text-[10px] mt-1">Triangle Structure Active</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let hardwareState = 'normal'; // normal, broken, solution
+        let roadType = 'smooth';
+        
+        // Configuration
+        const CONFIG = {
+            smooth: { baseShake: 0.5, resonance: false },
+            gravel: { baseShake: 3.0, resonance: false },
+            brick:  { baseShake: 4.0, resonance: true, targetFreq: 23.4 } 
+        };
+
+        // Elements
+        const cameraView = document.getElementById('camera-view');
+        const focusBox = document.getElementById('focus-box');
+        const warningMsg = document.getElementById('warning-msg');
+        const successMsg = document.getElementById('success-msg');
+        const vibDisplay = document.getElementById('vib-level');
+        const springStatusText = document.getElementById('spring-status-text');
+        const structureDesc = document.getElementById('structure-desc');
+        
+        // Anchors & Lines
+        const anchors = [
+            document.getElementById('anchor-0'),
+            document.getElementById('anchor-1'),
+            document.getElementById('anchor-2'),
+            document.getElementById('anchor-3')
+        ];
+        
+        const lines = [
+            document.getElementById('line-0'),
+            document.getElementById('line-1'),
+            document.getElementById('line-2'),
+            document.getElementById('line-3')
+        ];
+        
+        const lens = document.getElementById('lens');
+        const diagramBox = document.getElementById('ois-diagram');
+
+        // Scope
+        const canvas = document.getElementById('scope');
+        const ctx = canvas.getContext('2d');
+        const scopeData = new Array(40).fill(0);
+
+        function setHardware(state) {
+            hardwareState = state;
+            updateUI();
+            updateStructureVisuals();
+        }
+
+        function setRoad(type) {
+            roadType = type;
+            updateUI();
+        }
+
+        function updateUI() {
+            // Reset Buttons
+            document.getElementById('btn-normal').className = "py-2 text-xs rounded-md font-medium text-gray-500 transition-all hover:bg-white leading-tight";
+            document.getElementById('btn-broken').className = "py-2 text-xs rounded-md font-medium text-gray-500 transition-all hover:bg-white hover:text-red-500 leading-tight";
+            document.getElementById('btn-solution').className = "py-2 text-xs rounded-md font-bold text-gray-500 transition-all hover:bg-white hover:text-purple-600 leading-tight border border-transparent";
+
+            // Active State
+            if(hardwareState === 'normal') {
+                document.getElementById('btn-normal').classList.add('btn-active');
+            } else if (hardwareState === 'broken') {
+                document.getElementById('btn-broken').classList.add('border-red-200', 'bg-red-50', 'text-red-600', 'shadow-sm');
+                document.getElementById('btn-broken').classList.remove('text-gray-500');
+            } else if (hardwareState === 'solution') {
+                document.getElementById('btn-solution').classList.add('btn-solution-active');
+            }
+
+            // Road btns
+            document.querySelectorAll('.road-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-50', 'border-blue-500', 'ring-1', 'ring-blue-200');
+                btn.classList.add('border-gray-200', 'bg-white');
+            });
+            const activeBtn = document.getElementById(`road-${roadType}`);
+            activeBtn.classList.remove('border-gray-200', 'bg-white');
+            activeBtn.classList.add('bg-blue-50', 'border-blue-500', 'ring-1', 'ring-blue-200');
+        }
+        
+        // Update the anchor points and lines based on structure type
+        function updateStructureVisuals() {
+            if (hardwareState === 'solution') {
+                // Triangle Structure: Map 4 points to 3 visual locations
+                // Anchor 0 (TL) & Anchor 1 (TR) -> Merge to TOP CENTER (50%, 15%)
+                setAnchorPos(0, '50%', '15%');
+                setAnchorPos(1, '50%', '15%');
+                
+                // Anchor 2 (BL) -> Bottom Left (15%, 85%)
+                setAnchorPos(2, '15%', '85%');
+                
+                // Anchor 3 (BR) -> Bottom Right (85%, 85%)
+                setAnchorPos(3, '85%', '85%');
+                
+                structureDesc.innerHTML = `<span class="text-purple-600 font-bold">全新三角悬丝结构 (Triangular)</span><br>三点稳固，彻底消除 23.4Hz 共振`;
+            } else {
+                // Rectangular Structure: 4 Points
+                setAnchorPos(0, '10%', '10%'); // TL
+                setAnchorPos(1, '90%', '10%'); // TR
+                setAnchorPos(2, '10%', '90%'); // BL
+                setAnchorPos(3, '90%', '90%'); // BR
+                
+                const typeText = hardwareState === 'normal' ? '正常' : '问题';
+                structureDesc.innerHTML = `传统四线结构 (4-Wire ${hardwareState === 'normal' ? 'Normal' : 'Defective'})<br>${hardwareState === 'normal' ? '张力正常' : '悬丝疲劳，易共振'}`;
+            }
+        }
+
+        function setAnchorPos(index, left, top) {
+            const anchor = anchors[index];
+            anchor.style.left = left;
+            anchor.style.top = top;
+        }
+
+        // Calculate lines based on current lens position and hardware mode
+        function updateLines(lensX, lensY) {
+            const boxRect = diagramBox.getBoundingClientRect();
+            const centerX = (boxRect.width / 2) + lensX;
+            const centerY = (boxRect.height / 2) + lensY;
+            
+            let corners = [];
+            
+            if (hardwareState === 'solution') {
+                // Triangle Coords relative to box size
+                // Line 0 & 1 -> Top Center
+                // Line 2 -> BL
+                // Line 3 -> BR
+                const topX = boxRect.width * 0.5;
+                const topY = boxRect.height * 0.15;
+                const blX = boxRect.width * 0.15;
+                const blY = boxRect.height * 0.85;
+                const brX = boxRect.width * 0.85;
+                const brY = boxRect.height * 0.85;
+
+                corners = [
+                    { x: topX, y: topY }, // Line 0
+                    { x: topX, y: topY }, // Line 1 (Merged)
+                    { x: blX, y: blY },   // Line 2
+                    { x: brX, y: brY }    // Line 3
+                ];
+            } else {
+                // Rectangle Coords
+                corners = [
+                    { x: boxRect.width * 0.1, y: boxRect.height * 0.1 }, // TL
+                    { x: boxRect.width * 0.9, y: boxRect.height * 0.1 }, // TR
+                    { x: boxRect.width * 0.1, y: boxRect.height * 0.9 }, // BL
+                    { x: boxRect.width * 0.9, y: boxRect.height * 0.9 }  // BR
+                ];
+            }
+
+            corners.forEach((c, idx) => {
+                const el = lines[idx];
+                const dx = centerX - c.x;
+                const dy = centerY - c.y;
+                const length = Math.sqrt(dx*dx + dy*dy) - 28; 
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                el.style.width = `${Math.max(0, length)}px`;
+                el.style.top = `${c.y}px`;
+                el.style.left = `${c.x}px`;
+                el.style.transform = `rotate(${angle}deg)`;
+                
+                // Color Logic
+                if (hardwareState === 'broken' && roadType === 'brick' && idx === 1) { // TR wire breaks
+                    el.style.backgroundColor = '#ef4444'; 
+                    el.style.height = '3px';
+                    el.style.zIndex = '50';
+                } else if (hardwareState === 'solution') {
+                     el.style.backgroundColor = '#8b5cf6'; // Purple for solution
+                     el.style.height = '2px';
+                } else {
+                    el.style.backgroundColor = '#94a3b8';
+                    el.style.height = '2px';
+                    el.style.zIndex = 'auto';
+                }
+            });
+        }
+
+        // Animation Loop
+        let time = 0;
+        function animate() {
+            time += 0.1;
+            const config = CONFIG[roadType];
+            
+            let lensX = 0, lensY = 0; 
+            let camX = 0, camY = 0;   
+            let isResonating = false;
+            let isStableTriangle = (hardwareState === 'solution');
+
+            const baseVib = (Math.random() - 0.5) * config.baseShake;
+
+            if (hardwareState === 'normal') {
+                lensX = baseVib * 2; lensY = baseVib * 2;
+                camX = baseVib * 0.5; camY = baseVib * 0.5;
+                springStatusText.innerText = "Suspension OK";
+                springStatusText.className = "text-[10px] px-2 py-0.5 rounded bg-green-100 text-green-700 font-mono";
+                focusBox.style.borderColor = "#facc15";
+            } else if (hardwareState === 'broken') {
+                if (config.resonance) {
+                    isResonating = true;
+                    // Violent resonance
+                    const wave = Math.sin(time * 5) * 12; 
+                    const rand = (Math.random() - 0.5) * 8;
+                    lensX = wave + rand;
+                    lensY = (Math.cos(time * 5.5) * 10) + rand;
+                    camX = lensX * 1.5; camY = lensY * 1.5;
+                    springStatusText.innerText = "⚠ WIRE FAILURE";
+                    springStatusText.className = "text-[10px] px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold font-mono animate-pulse";
+                    focusBox.style.borderColor = "#ef4444";
+                } else {
+                    lensX = baseVib * 4; lensY = baseVib * 4;
+                    camX = baseVib * 1.5; camY = baseVib * 1.5;
+                    springStatusText.innerText = "Wire Loose";
+                    springStatusText.className = "text-[10px] px-2 py-0.5 rounded bg-yellow-100 text-yellow-700 font-mono";
+                    focusBox.style.borderColor = "#facc15";
+                }
+            } else if (hardwareState === 'solution') {
+                // Triangle Structure: Stable
+                lensX = baseVib * 0.8;
+                lensY = baseVib * 0.8;
+                camX = baseVib * 0.2; 
+                camY = baseVib * 0.2;
+                
+                springStatusText.innerText = "✨ TRIANGLE STABLE";
+                springStatusText.className = "text-[10px] px-2 py-0.5 rounded bg-purple-100 text-purple-700 font-bold font-mono";
+                focusBox.style.borderColor = "#4ade80"; 
+            }
+
+            cameraView.style.transform = `translate(${camX}px, ${camY}px) scale(1.1)`;
+            cameraView.style.filter = isResonating ? `blur(4px)` : `blur(0px)`;
+            
+            lens.style.transform = `translate(${lensX}px, ${lensY}px)`;
+            updateLines(lensX, lensY);
+
+            // Popups
+            warningMsg.className = isResonating 
+                ? "absolute top-16 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur px-4 py-2 rounded text-center border border-red-500/50 w-3/4 block" 
+                : "hidden";
+            
+            successMsg.className = (isStableTriangle && roadType === 'brick')
+                ? "absolute top-16 left-1/2 transform -translate-x-1/2 bg-green-900/90 backdrop-blur px-4 py-2 rounded text-center border border-green-500/50 w-3/4 block shadow-lg"
+                : "hidden";
+            
+            focusBox.style.width = isResonating ? (80 + Math.random()*20)+'px' : '80px';
+            focusBox.style.height = isResonating ? (80 + Math.random()*20)+'px' : '80px';
+            
+            // Scope Text
+            if (isResonating) {
+                 vibDisplay.innerText = "⚠ 23.4 Hz RESONANCE";
+                 vibDisplay.className = "text-xs font-mono text-red-500 font-bold animate-pulse";
+            } else if (isStableTriangle) {
+                 vibDisplay.innerText = "PASSED (NO RESONANCE)";
+                 vibDisplay.className = "text-xs font-mono text-purple-400 font-bold";
+            } else {
+                 vibDisplay.innerText = (config.baseShake * 2 + Math.random()).toFixed(1) + " Hz";
+                 vibDisplay.className = "text-xs font-mono text-green-400";
+            }
+
+            updateScope(camY);
+            requestAnimationFrame(animate);
+        }
+
+        function updateScope(val) {
+            scopeData.shift();
+            scopeData.push(val);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath();
+            
+            if (hardwareState === 'broken' && roadType === 'brick') ctx.strokeStyle = '#ef4444';
+            else if (hardwareState === 'solution') ctx.strokeStyle = '#a78bfa';
+            else ctx.strokeStyle = '#4ade80';
+
+            ctx.lineWidth = 2;
+            const step = canvas.width / scopeData.length;
+            const center = canvas.height / 2;
+            scopeData.forEach((v, i) => {
+                let y = center + v * 1.5;
+                if (i===0) ctx.moveTo(i*step, y);
+                else ctx.lineTo(i*step, y);
+            });
+            ctx.stroke();
+        }
+
+        // Init
+        updateStructureVisuals();
+        updateUI();
+        setTimeout(() => updateLines(0,0), 100);
+        animate();
+
+    </script>
+</body>
+</html>
