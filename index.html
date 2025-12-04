@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OIS 悬丝共振模拟器 (Bilingual Titles)</title>
+    <title>OIS 悬丝断裂模拟器 (Impact Version)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -138,7 +138,7 @@
                     <span class="text-3xl">🔬</span> 工程透视模式
                 </h1>
                 <p class="text-gray-500 text-sm mt-2 font-medium">
-                    Engineering View: Structure & Resonance
+                    Engineering View: Structure & Vibration Impact
                 </p>
             </div>
 
@@ -164,7 +164,7 @@
                         <div class="w-8 h-8 rounded-full border border-blue-200 opacity-50"></div>
                     </div>
                 </div>
-                <!-- 这里的说明文字区域 -->
+                <!-- 说明文字更新 -->
                 <p id="structure-desc" class="text-sm text-slate-500 mt-3 text-center leading-relaxed transition-all font-medium">
                     <!-- Text updated dynamically via JS -->
                 </p>
@@ -198,15 +198,16 @@
                     </button>
                     <button onclick="setRoad('brick')" id="road-brick" class="road-btn flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all cursor-pointer">
                         <span class="text-2xl mb-1">🧱</span>
-                        <div class="text-sm font-bold leading-tight text-center text-red-600">比利时路<br><span class="font-normal text-[10px] block text-gray-400 mt-1">Cobblestone Road</span></div>
+                        <div class="text-sm font-bold leading-tight text-center text-red-600">比利时路<br><span class="font-normal text-[10px] block text-gray-400 mt-1">Cobblestone (Heavy)</span></div>
                     </button>
                 </div>
 
                 <!-- 数据监控 -->
                 <div class="bg-black p-4 rounded-xl border border-gray-800 shadow-inner">
                     <div class="flex justify-between items-end mb-2">
-                        <span class="text-[10px] font-bold text-gray-400 tracking-wider">OIS JITTER (画面抖动)</span>
-                        <span id="vib-level" class="text-base font-mono text-green-400 font-bold">STABLE</span>
+                        <!-- 去掉 Resonance 字眼，改为 Vibration Level -->
+                        <span class="text-[10px] font-bold text-gray-400 tracking-wider">VIBRATION LEVEL (震动强度)</span>
+                        <span id="vib-level" class="text-base font-mono text-green-400 font-bold">NORMAL</span>
                     </div>
                     <canvas id="scope" height="60"></canvas>
                 </div>
@@ -246,16 +247,16 @@
                      <div class="w-12 h-12 rounded-lg bg-gray-800 opacity-60 backdrop-blur-sm border border-white/10"></div>
                 </div>
                 
-                <!-- 警告弹窗 (Bilingual) -->
+                <!-- 警告弹窗 (Updated) -->
                 <div id="warning-msg" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-red-500/50 w-4/5 shadow-2xl z-30">
-                    <div class="text-red-500 font-bold text-lg animate-pulse tracking-wide">⚠ RESONANCE (共振)</div>
-                    <div class="text-white text-sm mt-1 font-medium">Critical Failure @ 23.4Hz</div>
+                    <div class="text-red-500 font-bold text-lg animate-pulse tracking-wide">⚠ WIRE SNAPPED</div>
+                    <div class="text-white text-sm mt-1 font-medium">悬丝断裂 / High Impact</div>
                 </div>
                 
                 <!-- 手持检测故障弹窗 (Bilingual) -->
                  <div id="handheld-fail-msg" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 bg-yellow-900/90 backdrop-blur-md px-4 py-3 rounded-xl text-center border border-yellow-500/50 w-4/5 shadow-2xl z-30">
                     <div class="text-yellow-400 font-bold text-base tracking-wide">⚠ UNABLE TO FOCUS (无法对焦)</div>
-                    <div class="text-white text-xs mt-1 font-medium">Micro-vibration Detected / 悬丝微颤</div>
+                    <div class="text-white text-xs mt-1 font-medium">Wire Loose / 悬丝松动失效</div>
                 </div>
 
                 <!-- 成功弹窗 (Bilingual) -->
@@ -275,9 +276,9 @@
         
         // Configuration
         const CONFIG = {
-            handheld: { baseShake: 0.1, resonance: false, jitter: true }, 
-            gravel: { baseShake: 3.0, resonance: false, jitter: false },
-            brick:  { baseShake: 4.0, resonance: true, targetFreq: 23.4, jitter: false } 
+            handheld: { baseShake: 0.1, failure: false, jitter: true }, 
+            gravel: { baseShake: 3.0, failure: false, jitter: false },
+            brick:  { baseShake: 5.0, failure: true, jitter: false } // Increased shake, Removed specific freq
         };
 
         // Elements
@@ -463,7 +464,7 @@
             
             let lensX = 0, lensY = 0; 
             let camX = 0, camY = 0;   
-            let isResonating = false;
+            let isFailed = false;
             let isJittering = false;
             let isStableTriangle = (hardwareState === 'solution');
 
@@ -472,15 +473,16 @@
             if (hardwareState === 'normal') {
                 lensX = baseVib * 2; lensY = baseVib * 2;
                 camX = baseVib * 0.5; camY = baseVib * 0.5;
-                // springStatusText.innerText = "Suspension OK"; // Moved to updateStructureVisuals
                 focusBox.style.borderColor = "#facc15";
             } else if (hardwareState === 'broken') {
-                if (config.resonance) {
-                    isResonating = true;
-                    const wave = Math.sin(time * 5) * 12; 
-                    const rand = (Math.random() - 0.5) * 8;
+                if (config.failure) {
+                    // Brick Road Failure (Pure Mechanical Impact)
+                    isFailed = true;
+                    // Violent shake
+                    const wave = Math.sin(time * 5) * 15; 
+                    const rand = (Math.random() - 0.5) * 10;
                     lensX = wave + rand;
-                    lensY = (Math.cos(time * 5.5) * 10) + rand;
+                    lensY = (Math.cos(time * 5.5) * 12) + rand;
                     camX = lensX * 1.5; camY = lensY * 1.5;
                     springStatusText.innerText = "⚠️ FATIGUED / 严重疲劳";
                     springStatusText.className = "text-xs px-3 py-1 rounded-md bg-red-100 text-red-700 font-bold font-mono animate-pulse";
@@ -512,7 +514,7 @@
 
             cameraView.style.transform = `translate(${camX}px, ${camY}px) scale(1.1)`;
             
-            if (isResonating) {
+            if (isFailed) {
                  cameraView.style.filter = `blur(4px)`;
             } else if (isJittering) {
                  cameraView.style.filter = `blur(${Math.random() * 2}px)`;
@@ -527,7 +529,7 @@
             handheldFailMsg.className = "hidden";
             successMsg.className = "hidden";
 
-            if (isResonating) {
+            if (isFailed) {
                 warningMsg.className = "absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-red-500/50 w-4/5 shadow-2xl z-30 block";
             } else if (isJittering) {
                 handheldFailMsg.className = "absolute top-20 left-1/2 transform -translate-x-1/2 bg-yellow-900/90 backdrop-blur-md px-4 py-3 rounded-xl text-center border border-yellow-500/50 w-4/5 shadow-2xl z-30 block";
@@ -535,11 +537,11 @@
                 successMsg.className = "absolute top-20 left-1/2 transform -translate-x-1/2 bg-green-900/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-green-500/50 w-4/5 shadow-2xl z-30 block";
             }
             
-            if (isResonating || isJittering) {
+            if (isFailed || isJittering) {
                 const size = 96 + Math.sin(time * 10) * 5;
                 focusBox.style.width = size + 'px';
                 focusBox.style.height = size + 'px';
-                focusBox.style.borderColor = isResonating ? "#ef4444" : "#facc15";
+                focusBox.style.borderColor = isFailed ? "#ef4444" : "#facc15";
             } else {
                 focusBox.style.width = '96px';
                 focusBox.style.height = '96px';
@@ -547,8 +549,8 @@
             }
             
             // Scope Text (Bilingual)
-            if (isResonating) {
-                 vibDisplay.innerText = "⚠ 23.4 Hz (共振)";
+            if (isFailed) {
+                 vibDisplay.innerText = "⚠ WIRE SNAPPED / 悬丝断裂";
                  vibDisplay.className = "text-base font-mono text-red-500 font-bold animate-pulse";
             } else if (isJittering) {
                  vibDisplay.innerText = "⚠ JITTER (微颤)";
