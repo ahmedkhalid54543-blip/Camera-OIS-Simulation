@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OIS 悬丝共振模拟器 (Large Font Version)</title>
+    <title>OIS 悬丝共振模拟器 (Bilingual Titles)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
@@ -55,7 +55,7 @@
         /* OIS 结构示意图样式 */
         .ois-diagram {
             width: 100%;
-            height: 200px; /*稍微增高一点以适应大字体*/
+            height: 200px;
             background: #1e293b; 
             border-radius: 0.75rem;
             position: relative;
@@ -66,7 +66,7 @@
         }
 
         .lens-assembly {
-            width: 70px; /* 稍微加大镜头 */
+            width: 70px;
             height: 70px;
             background: radial-gradient(circle at 30% 30%, #60a5fa, #2563eb);
             border-radius: 50%;
@@ -78,7 +78,7 @@
 
         .spring-line {
             position: absolute;
-            height: 3px; /* 线条加粗 */
+            height: 3px;
             background-color: #94a3b8;
             transform-origin: 0 50%;
             pointer-events: none;
@@ -86,7 +86,7 @@
 
         .anchor-dot {
             position: absolute;
-            width: 14px; /* 锚点加大 */
+            width: 14px;
             height: 14px;
             background-color: #64748b; 
             border-radius: 50%;
@@ -98,21 +98,31 @@
             background-color: #111;
             border-radius: 0.5rem;
             width: 100%;
-            height: 90px; /* 示波器增高 */
+            height: 90px;
         }
         
+        /* 状态按钮样式 */
         .btn-active {
             border-color: #3b82f6 !important;
             background-color: #eff6ff !important;
             color: #1d4ed8 !important;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-        
         .btn-solution-active {
             border-color: #8b5cf6 !important;
             background-color: #f5f3ff !important;
             color: #6d28d9 !important;
             box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-road-active {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-handheld-active {
+             border-color: #f59e0b !important; /* Amber */
+             background-color: #fef3c7 !important;
+             color: #b45309 !important;
         }
     </style>
 </head>
@@ -154,8 +164,9 @@
                         <div class="w-8 h-8 rounded-full border border-blue-200 opacity-50"></div>
                     </div>
                 </div>
+                <!-- 这里的说明文字区域 -->
                 <p id="structure-desc" class="text-sm text-slate-500 mt-3 text-center leading-relaxed transition-all font-medium">
-                    当前：传统四线结构 (4-Wire Structure)<br>容易产生低频共振
+                    <!-- Text updated dynamically via JS -->
                 </p>
             </div>
 
@@ -164,37 +175,38 @@
                 <!-- 硬件开关 -->
                 <div class="grid grid-cols-3 gap-3 bg-gray-50 p-2 rounded-xl border border-gray-100">
                     <button onclick="setHardware('normal')" id="btn-normal" class="py-3 text-sm rounded-lg font-semibold text-gray-500 transition-all hover:bg-white leading-snug">
-                        正常模组<br><span class="text-xs scale-90 block opacity-80 font-normal">Normal (4-wire)</span>
+                        标准四线 (新)<br><span class="text-[10px] scale-90 block opacity-80 font-normal">Standard (New)</span>
                     </button>
                     <button onclick="setHardware('broken')" id="btn-broken" class="py-3 text-sm rounded-lg font-semibold text-gray-500 transition-all hover:bg-white hover:text-red-500 leading-snug">
-                        问题模组<br><span class="text-xs scale-90 block opacity-80 font-normal">Fatigued (4-wire)</span>
+                        标准四线 (旧)<br><span class="text-[10px] scale-90 block opacity-80 font-normal">Standard (Aged)</span>
                     </button>
                     <button onclick="setHardware('solution')" id="btn-solution" class="py-3 text-sm rounded-lg font-bold text-gray-500 transition-all hover:bg-white hover:text-purple-600 leading-snug border border-transparent">
-                        ✨ 终极方案<br><span class="text-xs scale-90 block opacity-80 font-normal">Triangular (3-wire)</span>
+                        ✨ 终极方案<br><span class="text-[10px] scale-90 block opacity-80 font-normal">Triangular (3-wire)</span>
                     </button>
                 </div>
 
                 <!-- 路况按钮 -->
-                <div class="grid grid-cols-3 gap-3">
-                    <button onclick="setRoad('smooth')" id="road-smooth" class="road-btn flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all cursor-pointer">
-                        <span class="text-3xl mb-2">🛣️</span>
-                        <div class="text-sm font-bold leading-tight text-center">平路<br><span class="font-normal text-xs block text-gray-400 mt-1">Smooth</span></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setRoad('handheld')" id="road-handheld" class="road-btn flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all cursor-pointer col-span-2">
+                        <span class="text-2xl mb-1">✋📱</span>
+                        <div class="text-sm font-bold leading-tight text-center">静止手持检测<br><span class="font-normal text-[10px] block text-gray-400 mt-1">Handheld Check (Office)</span></div>
                     </button>
+
                     <button onclick="setRoad('gravel')" id="road-gravel" class="road-btn flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all cursor-pointer">
-                        <span class="text-3xl mb-2">🪨</span>
-                        <div class="text-sm font-bold leading-tight text-center">碎石路<br><span class="font-normal text-xs block text-gray-400 mt-1">Gravel</span></div>
+                        <span class="text-2xl mb-1">🪨</span>
+                        <div class="text-sm font-bold leading-tight text-center">碎石路<br><span class="font-normal text-[10px] block text-gray-400 mt-1">Gravel Road</span></div>
                     </button>
                     <button onclick="setRoad('brick')" id="road-brick" class="road-btn flex flex-col items-center justify-center p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all cursor-pointer">
-                        <span class="text-3xl mb-2">🧱</span>
-                        <div class="text-sm font-bold leading-tight text-center text-red-600">比利时路<br><span class="font-normal text-xs block text-gray-400 mt-1">Cobblestone</span></div>
+                        <span class="text-2xl mb-1">🧱</span>
+                        <div class="text-sm font-bold leading-tight text-center text-red-600">比利时路<br><span class="font-normal text-[10px] block text-gray-400 mt-1">Cobblestone Road</span></div>
                     </button>
                 </div>
 
                 <!-- 数据监控 -->
                 <div class="bg-black p-4 rounded-xl border border-gray-800 shadow-inner">
                     <div class="flex justify-between items-end mb-2">
-                        <span class="text-xs font-bold text-gray-400 tracking-wider">GYRO FREQUENCY</span>
-                        <span id="vib-level" class="text-base font-mono text-green-400 font-bold">0.0 Hz</span>
+                        <span class="text-[10px] font-bold text-gray-400 tracking-wider">OIS JITTER (画面抖动)</span>
+                        <span id="vib-level" class="text-base font-mono text-green-400 font-bold">STABLE</span>
                     </div>
                     <canvas id="scope" height="60"></canvas>
                 </div>
@@ -208,11 +220,14 @@
             <div class="relative w-full h-full bg-black overflow-hidden rounded-[1.5rem]">
                 <!-- 模拟摄像头画面 -->
                 <div id="camera-view" class="camera-view">
-                    <div class="street-light" style="left: 20%"></div>
-                    <div class="street-light" style="left: 80%"></div>
-                    <div class="car-light"></div>
-                    <div class="absolute bottom-0 w-full h-1/3 bg-slate-800 opacity-50"></div>
-                    
+                    <div id="office-bg" class="absolute inset-0 bg-gray-200 hidden" style="background-image: url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=1000&auto=format&fit=crop'); background-size: cover; filter: brightness(0.8);"></div>
+                    <div id="street-bg" class="absolute inset-0">
+                        <div class="street-light" style="left: 20%; top: 35%;"></div>
+                        <div class="street-light" style="left: 80%; top: 35%;"></div>
+                        <div class="car-light" style="bottom: 20%;"></div>
+                        <div class="absolute bottom-0 w-full h-1/3 bg-slate-800 opacity-50"></div>
+                    </div>
+
                     <!-- 对焦框 -->
                     <div id="focus-box" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-[3px] border-yellow-400 opacity-80 transition-all duration-75">
                         <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-3 bg-yellow-400"></div>
@@ -231,16 +246,22 @@
                      <div class="w-12 h-12 rounded-lg bg-gray-800 opacity-60 backdrop-blur-sm border border-white/10"></div>
                 </div>
                 
-                <!-- 警告弹窗 -->
+                <!-- 警告弹窗 (Bilingual) -->
                 <div id="warning-msg" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-red-500/50 w-4/5 shadow-2xl z-30">
                     <div class="text-red-500 font-bold text-lg animate-pulse tracking-wide">⚠ RESONANCE (共振)</div>
-                    <div class="text-white text-sm mt-1 font-medium">23.4Hz Critical Failure</div>
+                    <div class="text-white text-sm mt-1 font-medium">Critical Failure @ 23.4Hz</div>
                 </div>
                 
-                <!-- 成功弹窗 -->
+                <!-- 手持检测故障弹窗 (Bilingual) -->
+                 <div id="handheld-fail-msg" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 bg-yellow-900/90 backdrop-blur-md px-4 py-3 rounded-xl text-center border border-yellow-500/50 w-4/5 shadow-2xl z-30">
+                    <div class="text-yellow-400 font-bold text-base tracking-wide">⚠ UNABLE TO FOCUS (无法对焦)</div>
+                    <div class="text-white text-xs mt-1 font-medium">Micro-vibration Detected / 悬丝微颤</div>
+                </div>
+
+                <!-- 成功弹窗 (Bilingual) -->
                  <div id="success-msg" class="hidden absolute top-20 left-1/2 transform -translate-x-1/2 bg-green-900/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-green-500/50 w-4/5 shadow-2xl z-30">
                     <div class="text-green-400 font-bold text-lg tracking-wide">✅ STABLE (稳定)</div>
-                    <div class="text-white text-sm mt-1 font-medium">Triangle Structure Active</div>
+                    <div class="text-white text-sm mt-1 font-medium">Focus Locked / 画面锁定</div>
                 </div>
             </div>
         </div>
@@ -249,24 +270,27 @@
 
     <script>
         // State
-        let hardwareState = 'normal'; // normal, broken, solution
-        let roadType = 'smooth';
+        let hardwareState = 'normal'; 
+        let roadType = 'handheld'; 
         
         // Configuration
         const CONFIG = {
-            smooth: { baseShake: 0.5, resonance: false },
-            gravel: { baseShake: 3.0, resonance: false },
-            brick:  { baseShake: 4.0, resonance: true, targetFreq: 23.4 } 
+            handheld: { baseShake: 0.1, resonance: false, jitter: true }, 
+            gravel: { baseShake: 3.0, resonance: false, jitter: false },
+            brick:  { baseShake: 4.0, resonance: true, targetFreq: 23.4, jitter: false } 
         };
 
         // Elements
         const cameraView = document.getElementById('camera-view');
         const focusBox = document.getElementById('focus-box');
         const warningMsg = document.getElementById('warning-msg');
+        const handheldFailMsg = document.getElementById('handheld-fail-msg');
         const successMsg = document.getElementById('success-msg');
         const vibDisplay = document.getElementById('vib-level');
         const springStatusText = document.getElementById('spring-status-text');
         const structureDesc = document.getElementById('structure-desc');
+        const officeBg = document.getElementById('office-bg');
+        const streetBg = document.getElementById('street-bg');
         
         // Anchors & Lines
         const anchors = [
@@ -308,7 +332,7 @@
             document.getElementById('btn-broken').className = "py-3 text-sm rounded-lg font-semibold text-gray-500 transition-all hover:bg-white hover:text-red-500 leading-snug";
             document.getElementById('btn-solution').className = "py-3 text-sm rounded-lg font-bold text-gray-500 transition-all hover:bg-white hover:text-purple-600 leading-snug border border-transparent";
 
-            // Active State
+            // Active Hardware State
             if(hardwareState === 'normal') {
                 document.getElementById('btn-normal').classList.add('btn-active');
             } else if (hardwareState === 'broken') {
@@ -318,50 +342,62 @@
                 document.getElementById('btn-solution').classList.add('btn-solution-active');
             }
 
-            // Road btns
+            // Reset Road Buttons
             document.querySelectorAll('.road-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-50', 'border-blue-500', 'ring-1', 'ring-blue-200');
+                btn.classList.remove('border-blue-500', 'ring-1', 'ring-blue-200', 'btn-road-active', 'btn-handheld-active');
                 btn.classList.add('border-gray-200', 'bg-white');
             });
+            
             const activeBtn = document.getElementById(`road-${roadType}`);
             activeBtn.classList.remove('border-gray-200', 'bg-white');
-            activeBtn.classList.add('bg-blue-50', 'border-blue-500', 'ring-1', 'ring-blue-200');
+            
+            if (roadType === 'handheld') {
+                 activeBtn.classList.add('btn-handheld-active', 'ring-1', 'ring-yellow-200');
+                 officeBg.classList.remove('hidden');
+                 streetBg.classList.add('hidden');
+            } else {
+                 activeBtn.classList.add('btn-road-active', 'ring-1', 'ring-blue-200', 'bg-blue-50');
+                 officeBg.classList.add('hidden');
+                 streetBg.classList.remove('hidden');
+            }
         }
         
-        // Update the anchor points and lines based on structure type
         function updateStructureVisuals() {
             if (hardwareState === 'solution') {
-                // Triangle Structure: Map 4 points to 3 visual locations
-                // Anchor 0 (TL) & Anchor 1 (TR) -> Merge to TOP CENTER (50%, 15%)
                 setAnchorPos(0, '50%', '15%');
                 setAnchorPos(1, '50%', '15%');
-                
-                // Anchor 2 (BL) -> Bottom Left (15%, 85%)
                 setAnchorPos(2, '15%', '85%');
-                
-                // Anchor 3 (BR) -> Bottom Right (85%, 85%)
                 setAnchorPos(3, '85%', '85%');
-                
-                structureDesc.innerHTML = `<span class="text-purple-600 font-bold">全新三角悬丝结构 (Triangular)</span><br>三点稳固，彻底消除 23.4Hz 共振`;
+                // Updated description for Triangle (Bilingual)
+                structureDesc.innerHTML = `<span class="text-purple-600 font-bold">全新三角悬丝结构 / Triangular Structure</span><br><span class="text-xs">Optimized for ID. 三点稳固，消除微颤与共振</span>`;
+                springStatusText.innerText = "优化结构 / Optimized";
+            } else if (hardwareState === 'normal') {
+                setAnchorPos(0, '10%', '10%');
+                setAnchorPos(1, '90%', '10%');
+                setAnchorPos(2, '10%', '90%');
+                setAnchorPos(3, '90%', '90%');
+                // Updated description for Normal (Bilingual)
+                structureDesc.innerHTML = `<span class="text-green-600 font-bold">标准四线结构 (出厂) / Standard 4-Wire (New)</span><br><span class="text-xs">Global Standard. 张力足，其他地区表现优异</span>`;
+                springStatusText.innerText = "悬丝正常 / Springs OK";
             } else {
-                // Rectangular Structure: 4 Points
-                setAnchorPos(0, '10%', '10%'); // TL
-                setAnchorPos(1, '90%', '10%'); // TR
-                setAnchorPos(2, '10%', '90%'); // BL
-                setAnchorPos(3, '90%', '90%'); // BR
-                
-                const typeText = hardwareState === 'normal' ? '正常' : '问题';
-                structureDesc.innerHTML = `传统四线结构 (4-Wire ${hardwareState === 'normal' ? 'Normal' : 'Defective'})<br>${hardwareState === 'normal' ? '张力正常' : '悬丝疲劳，易共振'}`;
+                setAnchorPos(0, '10%', '10%');
+                setAnchorPos(1, '90%', '10%');
+                setAnchorPos(2, '10%', '90%');
+                setAnchorPos(3, '90%', '90%');
+                // Updated description for Broken (Bilingual)
+                structureDesc.innerHTML = `<span class="text-red-500 font-bold">标准四线结构 (老化) / Standard 4-Wire (Fatigued)</span><br><span class="text-xs">Aged by Vibration. 因长期颠簸导致金属疲劳</span>`;
+                springStatusText.innerText = "悬丝疲劳 / Fatigued";
             }
         }
 
         function setAnchorPos(index, left, top) {
             const anchor = anchors[index];
-            anchor.style.left = left;
-            anchor.style.top = top;
+            if (anchor) {
+                anchor.style.left = left;
+                anchor.style.top = top;
+            }
         }
 
-        // Calculate lines based on current lens position and hardware mode
         function updateLines(lensX, lensY) {
             const boxRect = diagramBox.getBoundingClientRect();
             const centerX = (boxRect.width / 2) + lensX;
@@ -378,25 +414,25 @@
                 const brY = boxRect.height * 0.85;
 
                 corners = [
-                    { x: topX, y: topY }, // Line 0
-                    { x: topX, y: topY }, // Line 1 (Merged)
-                    { x: blX, y: blY },   // Line 2
-                    { x: brX, y: brY }    // Line 3
+                    { x: topX, y: topY }, { x: topX, y: topY },
+                    { x: blX, y: blY }, { x: brX, y: brY }
                 ];
             } else {
                 corners = [
-                    { x: boxRect.width * 0.1, y: boxRect.height * 0.1 }, // TL
-                    { x: boxRect.width * 0.9, y: boxRect.height * 0.1 }, // TR
-                    { x: boxRect.width * 0.1, y: boxRect.height * 0.9 }, // BL
-                    { x: boxRect.width * 0.9, y: boxRect.height * 0.9 }  // BR
+                    { x: boxRect.width * 0.1, y: boxRect.height * 0.1 },
+                    { x: boxRect.width * 0.9, y: boxRect.height * 0.1 },
+                    { x: boxRect.width * 0.1, y: boxRect.height * 0.9 },
+                    { x: boxRect.width * 0.9, y: boxRect.height * 0.9 }
                 ];
             }
 
             corners.forEach((c, idx) => {
                 const el = lines[idx];
+                if(!el) return;
+
                 const dx = centerX - c.x;
                 const dy = centerY - c.y;
-                const length = Math.sqrt(dx*dx + dy*dy) - 32; // slightly adjusted for larger lens
+                const length = Math.sqrt(dx*dx + dy*dy) - 32; 
                 const angle = Math.atan2(dy, dx) * 180 / Math.PI;
                 
                 el.style.width = `${Math.max(0, length)}px`;
@@ -404,13 +440,12 @@
                 el.style.left = `${c.x}px`;
                 el.style.transform = `rotate(${angle}deg)`;
                 
-                // Color Logic
-                if (hardwareState === 'broken' && roadType === 'brick' && idx === 1) { // TR wire breaks
+                if (hardwareState === 'broken' && (roadType === 'brick' || (roadType === 'handheld' && idx === 1))) {
                     el.style.backgroundColor = '#ef4444'; 
-                    el.style.height = '4px'; // Thicker red line
+                    el.style.height = '4px'; 
                     el.style.zIndex = '50';
                 } else if (hardwareState === 'solution') {
-                     el.style.backgroundColor = '#8b5cf6'; // Purple for solution
+                     el.style.backgroundColor = '#8b5cf6';
                      el.style.height = '3px';
                 } else {
                     el.style.backgroundColor = '#94a3b8';
@@ -429,6 +464,7 @@
             let lensX = 0, lensY = 0; 
             let camX = 0, camY = 0;   
             let isResonating = false;
+            let isJittering = false;
             let isStableTriangle = (hardwareState === 'solution');
 
             const baseVib = (Math.random() - 0.5) * config.baseShake;
@@ -436,8 +472,7 @@
             if (hardwareState === 'normal') {
                 lensX = baseVib * 2; lensY = baseVib * 2;
                 camX = baseVib * 0.5; camY = baseVib * 0.5;
-                springStatusText.innerText = "Suspension OK";
-                springStatusText.className = "text-xs px-3 py-1 rounded-md bg-green-100 text-green-700 font-bold font-mono";
+                // springStatusText.innerText = "Suspension OK"; // Moved to updateStructureVisuals
                 focusBox.style.borderColor = "#facc15";
             } else if (hardwareState === 'broken') {
                 if (config.resonance) {
@@ -447,13 +482,22 @@
                     lensX = wave + rand;
                     lensY = (Math.cos(time * 5.5) * 10) + rand;
                     camX = lensX * 1.5; camY = lensY * 1.5;
-                    springStatusText.innerText = "⚠ WIRE FAILURE";
+                    springStatusText.innerText = "⚠️ FATIGUED / 严重疲劳";
                     springStatusText.className = "text-xs px-3 py-1 rounded-md bg-red-100 text-red-700 font-bold font-mono animate-pulse";
                     focusBox.style.borderColor = "#ef4444";
+                } else if (config.jitter) {
+                    isJittering = true;
+                    const jitterX = (Math.random() - 0.5) * 3; 
+                    const jitterY = (Math.random() - 0.5) * 3;
+                    lensX = jitterX; lensY = jitterY;
+                    camX = jitterX * 2; camY = jitterY * 2;
+                    springStatusText.innerText = "⚠️ LOOSE / 悬丝松动";
+                    springStatusText.className = "text-xs px-3 py-1 rounded-md bg-yellow-100 text-yellow-700 font-bold font-mono";
+                    focusBox.style.borderColor = "#facc15";
                 } else {
                     lensX = baseVib * 4; lensY = baseVib * 4;
                     camX = baseVib * 1.5; camY = baseVib * 1.5;
-                    springStatusText.innerText = "Wire Loose";
+                    springStatusText.innerText = "⚠️ LOOSE / 悬丝松动";
                     springStatusText.className = "text-xs px-3 py-1 rounded-md bg-yellow-100 text-yellow-700 font-bold font-mono";
                     focusBox.style.borderColor = "#facc15";
                 }
@@ -462,39 +506,58 @@
                 lensY = baseVib * 0.8;
                 camX = baseVib * 0.2; 
                 camY = baseVib * 0.2;
-                
-                springStatusText.innerText = "✨ TRIANGLE STABLE";
                 springStatusText.className = "text-xs px-3 py-1 rounded-md bg-purple-100 text-purple-700 font-bold font-mono";
                 focusBox.style.borderColor = "#4ade80"; 
             }
 
             cameraView.style.transform = `translate(${camX}px, ${camY}px) scale(1.1)`;
-            cameraView.style.filter = isResonating ? `blur(4px)` : `blur(0px)`;
+            
+            if (isResonating) {
+                 cameraView.style.filter = `blur(4px)`;
+            } else if (isJittering) {
+                 cameraView.style.filter = `blur(${Math.random() * 2}px)`;
+            } else {
+                 cameraView.style.filter = `blur(0px)`;
+            }
             
             lens.style.transform = `translate(${lensX}px, ${lensY}px)`;
             updateLines(lensX, lensY);
 
-            // Popups
-            warningMsg.className = isResonating 
-                ? "absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-red-500/50 w-4/5 shadow-2xl z-30 block" 
-                : "hidden";
-            
-            successMsg.className = (isStableTriangle && roadType === 'brick')
-                ? "absolute top-20 left-1/2 transform -translate-x-1/2 bg-green-900/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-green-500/50 w-4/5 shadow-2xl z-30 block"
-                : "hidden";
-            
-            focusBox.style.width = isResonating ? (96 + Math.random()*20)+'px' : '96px';
-            focusBox.style.height = isResonating ? (96 + Math.random()*20)+'px' : '96px';
-            
-            // Scope Text
+            warningMsg.className = "hidden";
+            handheldFailMsg.className = "hidden";
+            successMsg.className = "hidden";
+
             if (isResonating) {
-                 vibDisplay.innerText = "⚠ 23.4 Hz RESONANCE";
+                warningMsg.className = "absolute top-20 left-1/2 transform -translate-x-1/2 bg-black/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-red-500/50 w-4/5 shadow-2xl z-30 block";
+            } else if (isJittering) {
+                handheldFailMsg.className = "absolute top-20 left-1/2 transform -translate-x-1/2 bg-yellow-900/90 backdrop-blur-md px-4 py-3 rounded-xl text-center border border-yellow-500/50 w-4/5 shadow-2xl z-30 block";
+            } else if (isStableTriangle && (roadType === 'brick' || roadType === 'handheld')) {
+                successMsg.className = "absolute top-20 left-1/2 transform -translate-x-1/2 bg-green-900/90 backdrop-blur-md px-6 py-4 rounded-xl text-center border border-green-500/50 w-4/5 shadow-2xl z-30 block";
+            }
+            
+            if (isResonating || isJittering) {
+                const size = 96 + Math.sin(time * 10) * 5;
+                focusBox.style.width = size + 'px';
+                focusBox.style.height = size + 'px';
+                focusBox.style.borderColor = isResonating ? "#ef4444" : "#facc15";
+            } else {
+                focusBox.style.width = '96px';
+                focusBox.style.height = '96px';
+                focusBox.style.borderColor = isStableTriangle ? "#4ade80" : "#facc15";
+            }
+            
+            // Scope Text (Bilingual)
+            if (isResonating) {
+                 vibDisplay.innerText = "⚠ 23.4 Hz (共振)";
                  vibDisplay.className = "text-base font-mono text-red-500 font-bold animate-pulse";
+            } else if (isJittering) {
+                 vibDisplay.innerText = "⚠ JITTER (微颤)";
+                 vibDisplay.className = "text-base font-mono text-yellow-500 font-bold";
             } else if (isStableTriangle) {
-                 vibDisplay.innerText = "PASSED (NO RESONANCE)";
+                 vibDisplay.innerText = "STABLE (稳)";
                  vibDisplay.className = "text-base font-mono text-purple-400 font-bold";
             } else {
-                 vibDisplay.innerText = (config.baseShake * 2 + Math.random()).toFixed(1) + " Hz";
+                 vibDisplay.innerText = "STABLE (稳)";
                  vibDisplay.className = "text-base font-mono text-green-400 font-bold";
             }
 
@@ -509,10 +572,11 @@
             ctx.beginPath();
             
             if (hardwareState === 'broken' && roadType === 'brick') ctx.strokeStyle = '#ef4444';
+            else if (hardwareState === 'broken' && roadType === 'handheld') ctx.strokeStyle = '#eab308'; 
             else if (hardwareState === 'solution') ctx.strokeStyle = '#a78bfa';
             else ctx.strokeStyle = '#4ade80';
 
-            ctx.lineWidth = 3; // Thicker scope line
+            ctx.lineWidth = 3;
             const step = canvas.width / scopeData.length;
             const center = canvas.height / 2;
             scopeData.forEach((v, i) => {
@@ -523,7 +587,6 @@
             ctx.stroke();
         }
 
-        // Init
         updateStructureVisuals();
         updateUI();
         setTimeout(() => updateLines(0,0), 100);
